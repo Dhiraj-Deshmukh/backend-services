@@ -1,3 +1,5 @@
+def projectDir = "${WORKSPACE}/backend-services/clinicomply-admin-service"
+
 pipeline {
     agent any
 
@@ -18,7 +20,9 @@ pipeline {
 
         stage('Build Project') {
             steps {
-                bat 'mvn clean package -DskipTests'
+				dir(projectDir) {
+					bat 'mvn clean package -DskipTests'
+				}
             }
         }
 
