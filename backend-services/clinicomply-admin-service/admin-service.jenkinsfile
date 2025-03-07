@@ -19,8 +19,8 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-				sh 'pwd'
-                sh 'docker build -t $DOCKER_IMAGE .'
+				bat 'echo %CD%'
+                bat 'docker build -t $DOCKER_IMAGE .'
             }
         }
 
