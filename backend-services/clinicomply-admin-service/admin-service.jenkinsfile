@@ -18,14 +18,14 @@ pipeline {
 
         stage('Build Project') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                bat 'mvn clean package -DskipTests'
             }
         }
 
         stage('Deploy to EC2') {
             steps {
                 sshagent(['EC2-SSH-KEY']) {
-                    sh '''
+                    bat '''
                     JAR_FILE=$(ls target/*.jar | head -n 1)
                     scp -o StrictHostKeyChecking=no $JAR_FILE $EC2_USER@$EC2_HOST:/home/ubuntu/$APP_NAME.jar
 
@@ -39,3 +39,4 @@ pipeline {
         }
     }
 }
+
