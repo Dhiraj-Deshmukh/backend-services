@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "dhirajdeshmukh/clinicomply-admin-service"
+        CONTAINER_NAME = "clinicomply-admin-service"
+        EC2_USER = "ubuntu"
+        EC2_HOST = "3.110.88.160"
+        SSH_CREDENTIALS = "EC2-SSH-KEY"
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Dhiraj-Deshmukh/backend-services.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $DOCKER_IMAGE .'
+            }
+        }
+
+        stage('Push Docker Image to Docker Hub') {
+            steps {
+                withDockerRegistry([credentialsId: 'docker-hub-credentials', url: '']) {
+                    sh 'docker push $DOCKER_IMAGE'
+                }
+            }
+        }
+
+        stage('Deploy to EC2') {
+            steps {
+                sshagent(['EC2-SSH-KEY']) {
+                    sh '''
+                    ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST <<EOF
+                        docker stop $CONTAINER_NAME || true
+                        docker rm $CONTAINER_NAME || true
+                        docker pull $DOCKER_IMAGE
+                        docker run -d --name $CONTAINER_NAME -p 8080:8080 $DOCKER_IMAGE
+                    EOF
+                    '''
+                }
+            }
+        }
+    }
+}
