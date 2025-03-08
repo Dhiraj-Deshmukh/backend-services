@@ -1,11 +1,11 @@
 pipeline {
   environment {
-    REGISTRY = "${ECR_REGISTRY}/admin-service"
+    REGISTRY = "${ECR_REGISTRY}/clinicomply-admin-service"
     CURRENT_RELEASE_IMAGE = "${REGISTRY}:${RELEASE_TAG_TEXT}-${BUILD_NUMBER}"
     PROD_RELEASE_IMAGE_TAG = "${REGISTRY}:${PROD_RELEASE_TAG}"
     PROJECT_SOURCE_DIR = "backend-services/services/clinicomply-admin-service"
-    GIT_REPO = "https://github.com/your-org/backend-services.git"
-    GIT_BRANCH = "master"
+    GIT_REPO = "https://github.com/Dhiraj-Deshmukh/backend-services.git"
+    GIT_BRANCH = "main"
   }
   agent any
   stages {
@@ -13,7 +13,7 @@ pipeline {
       steps {
         script {
           sh "rm -rf ${WORKSPACE}/*"
-          git branch: "${GIT_BRANCH}", credentialsId: 'GIT-CREDENTIAL-ID', url: "${GIT_REPO}"
+          git branch: "${GIT_BRANCH}", credentialsId: 'GITHUB_CREDENTIALS', url: "${GIT_REPO}"
         }
       }
     }
@@ -57,9 +57,9 @@ pipeline {
       steps {
         script {
           sh '''
-            docker stop admin-service || true
-            docker rm admin-service || true
-            docker run -d --name admin-service -p 8080:8080 ${CURRENT_RELEASE_IMAGE}
+            docker stop clinicomply-admin-service || true
+            docker rm clinicomply-admin-service || true
+            docker run -d --name clinicomply-admin-service -p 9001:9001 ${CURRENT_RELEASE_IMAGE}
           '''
         }
       }
