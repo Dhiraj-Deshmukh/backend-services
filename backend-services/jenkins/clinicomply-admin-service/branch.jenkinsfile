@@ -1,0 +1,68 @@
+pipeline {
+  environment {
+    REGISTRY = "${ECR_REGISTRY}/admin-service"
+    CURRENT_RELEASE_IMAGE = "${REGISTRY}:${RELEASE_TAG_TEXT}-${BUILD_NUMBER}"
+    PROD_RELEASE_IMAGE_TAG = "${REGISTRY}:${PROD_RELEASE_TAG}"
+    PROJECT_SOURCE_DIR = "backend-services/services/clinicomply-admin-service"
+    GIT_REPO = "https://github.com/your-org/backend-services.git"
+    GIT_BRANCH = "master"
+  }
+  agent any
+  stages {
+    stage('Git Checkout') {
+      steps {
+        script {
+          sh "rm -rf ${WORKSPACE}/*"
+          git branch: "${GIT_BRANCH}", credentialsId: 'GIT-CREDENTIAL-ID', url: "${GIT_REPO}"
+        }
+      }
+    }
+    stage('AWS ECR Login') {
+      steps {
+        script {
+          sh 'aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${REGISTRY}'
+        }
+      }
+    }
+    stage('Building image') {
+      steps {
+        script {
+          sh 'docker build -t ${CURRENT_RELEASE_IMAGE} -t ${PROD_RELEASE_IMAGE_TAG} -f ${PROJECT_SOURCE_DIR}/Dockerfile .'
+        }
+      }
+    }
+    stage('Push Docker Image To AWS ECR') {
+      steps {
+        script {
+          sh 'docker push ${CURRENT_RELEASE_IMAGE}'
+          sh 'docker push ${PROD_RELEASE_IMAGE_TAG}'
+        }
+      }
+    }
+    stage('Clean Up Local Images') {
+      steps {
+        script {
+          try {
+            sh 'docker rmi -f ${CURRENT_RELEASE_IMAGE}'
+            sh 'docker rmi -f ${PROD_RELEASE_IMAGE_TAG}'
+            sh 'docker image prune -af'
+          } catch (err) {
+            echo "Error in Clean Up Local Images"
+            echo err.getMessage()
+          }
+        }
+      }
+    }
+    stage('Deploy & Run on EC2') {
+      steps {
+        script {
+          sh '''
+            docker stop admin-service || true
+            docker rm admin-service || true
+            docker run -d --name admin-service -p 8080:8080 ${CURRENT_RELEASE_IMAGE}
+          '''
+        }
+      }
+    }
+  }
+}
