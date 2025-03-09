@@ -27,7 +27,11 @@ pipeline {
     stage('Building image') {
       steps {
         script {
-          sh 'docker build -t ${CURRENT_RELEASE_IMAGE} -t ${PROD_RELEASE_IMAGE_TAG} -f ${PROJECT_SOURCE_DIR}/Dockerfile .'
+          // Navigate to the project source directory and build the Docker image
+          sh """
+            cd ${PROJECT_SOURCE_DIR}
+            docker build -t ${CURRENT_RELEASE_IMAGE} -t ${PROD_RELEASE_IMAGE_TAG} -f Dockerfile .
+          """
         }
       }
     }

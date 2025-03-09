@@ -15,11 +15,11 @@ RUN apk update && apk upgrade \
    && apk add --no-cache msttcorefonts-installer \
    && update-ms-fonts && fc-cache -f
 
-# Copy deployment-related files
-COPY ./clinicomply-admin-service/deployment/* ./
+# Copy deployment-related files (if any)
+COPY ./deployment/* ./deployment/
 
 # Copy the built JAR file from Jenkins workspace
-COPY ./clinicomply-admin-service/target/*.jar ./clinicomply-admin-service.jar
+COPY ./target/*.jar ./clinicomply-admin-service.jar
 
 # Command to run the application
 ENTRYPOINT [ "sh", "-c", "java -Dlogging.config=file:./logback.xml -jar ./clinicomply-admin-service.jar" ]
